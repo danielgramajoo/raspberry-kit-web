@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control Raspberry Pi</title>
+</head>
+<body>
+
+  <h1>Control de LED</h1>
+
+  <p>Estado: <span id="estado">Cargando...</span></p>
+
+  <button onclick="encender()">ENCENDER</button>
+  <button onclick="apagar()">APAGAR</button>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      databaseURL: "https://raspberry-iot-d9350-default-rtdb.firebaseio.com/"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const ledRef = ref(db, "actuadores/led");
+
+    window.encender = function() {
+      set(ledRef, true);
+    }
+
+    window.apagar = function() {
+      set(ledRef, false);
+    }
+
+    onValue(ledRef, (snapshot) => {
+      const estado = snapshot.val();
+
+      if (estado === true) {
+        document.getElementById("estado").textContent = "ENCENDIDO";
+      } else {
+        document.getElementById("estado").textContent = "APAGADO";
+      }
+    });
+  </script>
+
+</body>
+</html>
