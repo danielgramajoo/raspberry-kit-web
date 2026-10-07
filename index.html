@@ -19,22 +19,18 @@
     }
 
     header {
-      background: #20232a;
+      background: #1f2937;
       color: white;
       padding: 24px;
       text-align: center;
     }
 
     header h1 {
-      margin: 0;
-    }
-
-    header p {
-      margin-bottom: 0;
+      margin: 0 0 8px 0;
     }
 
     .contenedor {
-      max-width: 1000px;
+      max-width: 1100px;
       margin: 30px auto;
       padding: 20px;
     }
@@ -47,7 +43,7 @@
 
     .card {
       background: white;
-      border-radius: 15px;
+      border-radius: 16px;
       padding: 22px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
@@ -57,7 +53,7 @@
     }
 
     .valor {
-      font-size: 34px;
+      font-size: 36px;
       font-weight: bold;
       margin: 15px 0;
     }
@@ -97,17 +93,17 @@
     }
 
     .btn-on {
-      background: #28a745;
+      background: #22c55e;
       color: white;
     }
 
     .btn-off {
-      background: #dc3545;
+      background: #ef4444;
       color: white;
     }
 
     .btn-enviar {
-      background: #007bff;
+      background: #2563eb;
       color: white;
       width: 100%;
       margin-top: 12px;
@@ -148,9 +144,8 @@
 
   <div class="grid">
 
-    <!-- LUZ -->
     <div class="card">
-      <h2>💡 Luz</h2>
+      <h2>Luz</h2>
 
       <div class="valor">
         <span id="lux">--</span>
@@ -158,17 +153,15 @@
       </div>
 
       <p>
-        Sensor BH1750:
-        <span id="estadoLuz" class="estado">
+        BH1750:
+        <span id="estadoBh1750" class="estado">
           Cargando...
         </span>
       </p>
     </div>
 
-
-    <!-- TEMPERATURA -->
     <div class="card">
-      <h2>🌡️ Temperatura</h2>
+      <h2>Temperatura</h2>
 
       <div class="valor">
         <span id="temperatura">--</span>
@@ -176,17 +169,15 @@
       </div>
 
       <p>
-        Sensor AHT20:
+        AHT20:
         <span id="estadoAht20" class="estado">
           Cargando...
         </span>
       </p>
     </div>
 
-
-    <!-- HUMEDAD -->
     <div class="card">
-      <h2>💧 Humedad</h2>
+      <h2>Humedad</h2>
 
       <div class="valor">
         <span id="humedad">--</span>
@@ -196,10 +187,8 @@
       <p>Humedad relativa del ambiente</p>
     </div>
 
-
-    <!-- LED -->
     <div class="card">
-      <h2>💡 Control LED</h2>
+      <h2>Control LED</h2>
 
       <p>
         Estado:
@@ -217,16 +206,14 @@
       </button>
     </div>
 
-
-    <!-- OLED -->
     <div class="card">
-      <h2>🖥️ Pantalla OLED</h2>
+      <h2>Pantalla OLED</h2>
 
       <input
         id="mensaje"
         type="text"
-        placeholder="Escribí un mensaje"
         maxlength="40"
+        placeholder="Escribí un mensaje"
       >
 
       <button
@@ -248,9 +235,8 @@
 </div>
 
 <footer>
-  Raspberry Pi 3 + Firebase Realtime Database + GitHub Pages
+  Raspberry Pi 3 + Firebase + GitHub Pages
 </footer>
-
 
 <script type="module">
 
@@ -276,9 +262,7 @@
   const db = getDatabase(app);
 
 
-  // =========================
-  // REFERENCIAS
-  // =========================
+  // REFERENCIAS FIREBASE
 
   const ledRef =
     ref(db, "actuadores/led");
@@ -286,14 +270,14 @@
   const luxRef =
     ref(db, "sensores/luz");
 
-  const bh1750Ref =
-    ref(db, "sensores/bh1750");
-
   const temperaturaRef =
     ref(db, "sensores/temperatura");
 
   const humedadRef =
     ref(db, "sensores/humedad");
+
+  const bh1750Ref =
+    ref(db, "sensores/bh1750");
 
   const aht20Ref =
     ref(db, "sensores/aht20");
@@ -302,9 +286,7 @@
     ref(db, "pantalla/mensaje");
 
 
-  // =========================
   // LUZ
-  // =========================
 
   onValue(luxRef, (snapshot) => {
 
@@ -316,12 +298,38 @@
   });
 
 
+  // TEMPERATURA
+
+  onValue(temperaturaRef, (snapshot) => {
+
+    const valor = snapshot.val();
+
+    document.getElementById("temperatura").textContent =
+      valor ?? "--";
+
+  });
+
+
+  // HUMEDAD
+
+  onValue(humedadRef, (snapshot) => {
+
+    const valor = snapshot.val();
+
+    document.getElementById("humedad").textContent =
+      valor ?? "--";
+
+  });
+
+
+  // ESTADO BH1750
+
   onValue(bh1750Ref, (snapshot) => {
 
     const estado = snapshot.val();
 
     const elemento =
-      document.getElementById("estadoLuz");
+      document.getElementById("estadoBh1750");
 
     if (estado === "CONECTADO") {
 
@@ -338,37 +346,7 @@
   });
 
 
-  // =========================
-  // TEMPERATURA
-  // =========================
-
-  onValue(temperaturaRef, (snapshot) => {
-
-    const valor = snapshot.val();
-
-    document.getElementById("temperatura").textContent =
-      valor ?? "--";
-
-  });
-
-
-  // =========================
-  // HUMEDAD
-  // =========================
-
-  onValue(humedadRef, (snapshot) => {
-
-    const valor = snapshot.val();
-
-    document.getElementById("humedad").textContent =
-      valor ?? "--";
-
-  });
-
-
-  // =========================
-  // AHT20
-  // =========================
+  // ESTADO AHT20
 
   onValue(aht20Ref, (snapshot) => {
 
@@ -392,9 +370,7 @@
   });
 
 
-  // =========================
   // LED
-  // =========================
 
   window.encenderLed = function() {
 
@@ -432,9 +408,7 @@
   });
 
 
-  // =========================
   // OLED
-  // =========================
 
   window.enviarMensaje = function() {
 
