@@ -21,25 +21,33 @@
     header {
       background: #20232a;
       color: white;
-      padding: 22px;
+      padding: 24px;
       text-align: center;
     }
 
+    header h1 {
+      margin: 0;
+    }
+
+    header p {
+      margin-bottom: 0;
+    }
+
     .contenedor {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 30px auto;
       padding: 20px;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 20px;
     }
 
     .card {
       background: white;
-      border-radius: 14px;
+      border-radius: 15px;
       padding: 22px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
@@ -49,9 +57,14 @@
     }
 
     .valor {
-      font-size: 36px;
+      font-size: 34px;
       font-weight: bold;
       margin: 15px 0;
+    }
+
+    .unidad {
+      font-size: 18px;
+      font-weight: normal;
     }
 
     .estado {
@@ -76,9 +89,9 @@
 
     button {
       border: none;
-      padding: 12px 18px;
+      padding: 13px 18px;
       margin: 5px 5px 5px 0;
-      border-radius: 8px;
+      border-radius: 9px;
       cursor: pointer;
       font-size: 15px;
     }
@@ -97,7 +110,7 @@
       background: #007bff;
       color: white;
       width: 100%;
-      margin-top: 10px;
+      margin-top: 12px;
     }
 
     input {
@@ -112,13 +125,13 @@
       background: #f1f1f1;
       padding: 12px;
       border-radius: 8px;
-      margin-top: 10px;
+      margin-top: 12px;
       word-break: break-word;
     }
 
     footer {
       text-align: center;
-      padding: 20px;
+      padding: 25px;
       color: #777;
     }
   </style>
@@ -135,24 +148,58 @@
 
   <div class="grid">
 
+    <!-- LUZ -->
     <div class="card">
-      <h2>Sensor de luz</h2>
+      <h2>💡 Luz</h2>
 
       <div class="valor">
-        <span id="lux">--</span> lux
+        <span id="lux">--</span>
+        <span class="unidad">lux</span>
       </div>
 
       <p>
-        Estado:
-        <span id="estadoSensor" class="estado">
+        Sensor BH1750:
+        <span id="estadoLuz" class="estado">
           Cargando...
         </span>
       </p>
     </div>
 
 
+    <!-- TEMPERATURA -->
     <div class="card">
-      <h2>Control de LED</h2>
+      <h2>🌡️ Temperatura</h2>
+
+      <div class="valor">
+        <span id="temperatura">--</span>
+        <span class="unidad">°C</span>
+      </div>
+
+      <p>
+        Sensor AHT20:
+        <span id="estadoAht20" class="estado">
+          Cargando...
+        </span>
+      </p>
+    </div>
+
+
+    <!-- HUMEDAD -->
+    <div class="card">
+      <h2>💧 Humedad</h2>
+
+      <div class="valor">
+        <span id="humedad">--</span>
+        <span class="unidad">%</span>
+      </div>
+
+      <p>Humedad relativa del ambiente</p>
+    </div>
+
+
+    <!-- LED -->
+    <div class="card">
+      <h2>💡 Control LED</h2>
 
       <p>
         Estado:
@@ -171,13 +218,14 @@
     </div>
 
 
+    <!-- OLED -->
     <div class="card">
-      <h2>Pantalla OLED</h2>
+      <h2>🖥️ Pantalla OLED</h2>
 
       <input
         id="mensaje"
         type="text"
-        placeholder="Escribí un mensaje para la OLED"
+        placeholder="Escribí un mensaje"
         maxlength="40"
       >
 
@@ -200,7 +248,7 @@
 </div>
 
 <footer>
-  Raspberry Pi 3 + Firebase + GitHub Pages
+  Raspberry Pi 3 + Firebase Realtime Database + GitHub Pages
 </footer>
 
 
@@ -209,7 +257,6 @@
   import {
     initializeApp
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
 
   import {
     getDatabase,
@@ -226,12 +273,11 @@
 
 
   const app = initializeApp(firebaseConfig);
-
   const db = getDatabase(app);
 
 
   // =========================
-  // REFERENCIAS FIREBASE
+  // REFERENCIAS
   // =========================
 
   const ledRef =
@@ -240,11 +286,110 @@
   const luxRef =
     ref(db, "sensores/luz");
 
-  const sensorRef =
+  const bh1750Ref =
     ref(db, "sensores/bh1750");
+
+  const temperaturaRef =
+    ref(db, "sensores/temperatura");
+
+  const humedadRef =
+    ref(db, "sensores/humedad");
+
+  const aht20Ref =
+    ref(db, "sensores/aht20");
 
   const mensajeRef =
     ref(db, "pantalla/mensaje");
+
+
+  // =========================
+  // LUZ
+  // =========================
+
+  onValue(luxRef, (snapshot) => {
+
+    const valor = snapshot.val();
+
+    document.getElementById("lux").textContent =
+      valor ?? "--";
+
+  });
+
+
+  onValue(bh1750Ref, (snapshot) => {
+
+    const estado = snapshot.val();
+
+    const elemento =
+      document.getElementById("estadoLuz");
+
+    if (estado === "CONECTADO") {
+
+      elemento.textContent = "CONECTADO";
+      elemento.className = "estado ok";
+
+    } else {
+
+      elemento.textContent = "ERROR";
+      elemento.className = "estado error";
+
+    }
+
+  });
+
+
+  // =========================
+  // TEMPERATURA
+  // =========================
+
+  onValue(temperaturaRef, (snapshot) => {
+
+    const valor = snapshot.val();
+
+    document.getElementById("temperatura").textContent =
+      valor ?? "--";
+
+  });
+
+
+  // =========================
+  // HUMEDAD
+  // =========================
+
+  onValue(humedadRef, (snapshot) => {
+
+    const valor = snapshot.val();
+
+    document.getElementById("humedad").textContent =
+      valor ?? "--";
+
+  });
+
+
+  // =========================
+  // AHT20
+  // =========================
+
+  onValue(aht20Ref, (snapshot) => {
+
+    const estado = snapshot.val();
+
+    const elemento =
+      document.getElementById("estadoAht20");
+
+    if (estado === "CONECTADO") {
+
+      elemento.textContent = "CONECTADO";
+      elemento.className = "estado ok";
+
+    } else {
+
+      elemento.textContent = "ERROR";
+      elemento.className = "estado error";
+
+    }
+
+  });
 
 
   // =========================
@@ -253,169 +398,74 @@
 
   window.encenderLed = function() {
 
-    set(
-      ledRef,
-      true
-    );
+    set(ledRef, true);
 
   };
 
 
   window.apagarLed = function() {
 
-    set(
-      ledRef,
-      false
-    );
+    set(ledRef, false);
 
   };
 
 
-  onValue(
-    ledRef,
-    (snapshot) => {
+  onValue(ledRef, (snapshot) => {
 
-      const estado =
-        snapshot.val();
+    const estado = snapshot.val();
 
-      const elemento =
-        document.getElementById(
-          "estadoLed"
-        );
+    const elemento =
+      document.getElementById("estadoLed");
 
+    if (estado === true) {
 
-      if (estado === true) {
+      elemento.textContent = "ENCENDIDO";
+      elemento.className = "estado on";
 
-        elemento.textContent =
-          "ENCENDIDO";
+    } else {
 
-        elemento.className =
-          "estado on";
-
-      }
-
-      else {
-
-        elemento.textContent =
-          "APAGADO";
-
-        elemento.className =
-          "estado off";
-
-      }
+      elemento.textContent = "APAGADO";
+      elemento.className = "estado off";
 
     }
-  );
 
-
-  // =========================
-  // SENSOR DE LUZ
-  // =========================
-
-  onValue(
-    luxRef,
-    (snapshot) => {
-
-      const lux =
-        snapshot.val();
-
-      document.getElementById(
-        "lux"
-      ).textContent =
-        lux ?? "--";
-
-    }
-  );
-
-
-  onValue(
-    sensorRef,
-    (snapshot) => {
-
-      const estado =
-        snapshot.val();
-
-      const elemento =
-        document.getElementById(
-          "estadoSensor"
-        );
-
-
-      if (estado === "CONECTADO") {
-
-        elemento.textContent =
-          "CONECTADO";
-
-        elemento.className =
-          "estado ok";
-
-      }
-
-      else {
-
-        elemento.textContent =
-          "ERROR";
-
-        elemento.className =
-          "estado error";
-
-      }
-
-    }
-  );
+  });
 
 
   // =========================
   // OLED
   // =========================
 
-  window.enviarMensaje =
-    function() {
+  window.enviarMensaje = function() {
 
-      const input =
-        document.getElementById(
-          "mensaje"
-        );
+    const input =
+      document.getElementById("mensaje");
 
-      const texto =
-        input.value.trim();
+    const texto =
+      input.value.trim();
 
+    if (texto === "") {
 
-      if (texto === "") {
-
-        alert(
-          "Escribí un mensaje primero."
-        );
-
-        return;
-      }
-
-
-      set(
-        mensajeRef,
-        texto
-      );
-
-
-      input.value = "";
-
-    };
-
-
-  onValue(
-    mensajeRef,
-    (snapshot) => {
-
-      const mensaje =
-        snapshot.val();
-
-      document.getElementById(
-        "mensajeActual"
-      ).textContent =
-        mensaje ?? "Sin mensaje";
+      alert("Escribí un mensaje primero.");
+      return;
 
     }
-  );
+
+    set(mensajeRef, texto);
+
+    input.value = "";
+
+  };
+
+
+  onValue(mensajeRef, (snapshot) => {
+
+    const mensaje = snapshot.val();
+
+    document.getElementById("mensajeActual").textContent =
+      mensaje ?? "Sin mensaje";
+
+  });
 
 </script>
 
