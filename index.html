@@ -3,48 +3,421 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Control Raspberry Pi</title>
+
+  <title>Raspberry Pi IoT</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      color: #222;
+    }
+
+    header {
+      background: #20232a;
+      color: white;
+      padding: 22px;
+      text-align: center;
+    }
+
+    .contenedor {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    .card h2 {
+      margin-top: 0;
+    }
+
+    .valor {
+      font-size: 36px;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+
+    .estado {
+      font-weight: bold;
+    }
+
+    .ok {
+      color: green;
+    }
+
+    .error {
+      color: red;
+    }
+
+    .on {
+      color: green;
+    }
+
+    .off {
+      color: #777;
+    }
+
+    button {
+      border: none;
+      padding: 12px 18px;
+      margin: 5px 5px 5px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .btn-on {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-off {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-enviar {
+      background: #007bff;
+      color: white;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .mensaje-actual {
+      background: #f1f1f1;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 10px;
+      word-break: break-word;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #777;
+    }
+  </style>
 </head>
+
 <body>
 
-  <h1>Control de LED</h1>
+<header>
+  <h1>Raspberry Pi IoT</h1>
+  <p>Monitoreo y control en tiempo real</p>
+</header>
 
-  <p>Estado: <span id="estado">Cargando...</span></p>
+<div class="contenedor">
 
-  <button onclick="encender()">ENCENDER</button>
-  <button onclick="apagar()">APAGAR</button>
+  <div class="grid">
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    <div class="card">
+      <h2>Sensor de luz</h2>
 
-    const firebaseConfig = {
-      databaseURL: "https://raspberry-iot-d9350-default-rtdb.firebaseio.com/"
-    };
+      <div class="valor">
+        <span id="lux">--</span> lux
+      </div>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+      <p>
+        Estado:
+        <span id="estadoSensor" class="estado">
+          Cargando...
+        </span>
+      </p>
+    </div>
 
-    const ledRef = ref(db, "actuadores/led");
 
-    window.encender = function() {
-      set(ledRef, true);
-    }
+    <div class="card">
+      <h2>Control de LED</h2>
 
-    window.apagar = function() {
-      set(ledRef, false);
-    }
+      <p>
+        Estado:
+        <span id="estadoLed" class="estado">
+          Cargando...
+        </span>
+      </p>
 
-    onValue(ledRef, (snapshot) => {
-      const estado = snapshot.val();
+      <button class="btn-on" onclick="encenderLed()">
+        ENCENDER
+      </button>
+
+      <button class="btn-off" onclick="apagarLed()">
+        APAGAR
+      </button>
+    </div>
+
+
+    <div class="card">
+      <h2>Pantalla OLED</h2>
+
+      <input
+        id="mensaje"
+        type="text"
+        placeholder="Escribí un mensaje para la OLED"
+        maxlength="40"
+      >
+
+      <button
+        class="btn-enviar"
+        onclick="enviarMensaje()"
+      >
+        ENVIAR A OLED
+      </button>
+
+      <div class="mensaje-actual">
+        Mensaje actual:
+        <br>
+        <strong id="mensajeActual">--</strong>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<footer>
+  Raspberry Pi 3 + Firebase + GitHub Pages
+</footer>
+
+
+<script type="module">
+
+  import {
+    initializeApp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+
+  import {
+    getDatabase,
+    ref,
+    set,
+    onValue
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
+  const firebaseConfig = {
+    databaseURL:
+      "https://raspberry-iot-d9350-default-rtdb.firebaseio.com/"
+  };
+
+
+  const app = initializeApp(firebaseConfig);
+
+  const db = getDatabase(app);
+
+
+  // =========================
+  // REFERENCIAS FIREBASE
+  // =========================
+
+  const ledRef =
+    ref(db, "actuadores/led");
+
+  const luxRef =
+    ref(db, "sensores/luz");
+
+  const sensorRef =
+    ref(db, "sensores/bh1750");
+
+  const mensajeRef =
+    ref(db, "pantalla/mensaje");
+
+
+  // =========================
+  // LED
+  // =========================
+
+  window.encenderLed = function() {
+
+    set(
+      ledRef,
+      true
+    );
+
+  };
+
+
+  window.apagarLed = function() {
+
+    set(
+      ledRef,
+      false
+    );
+
+  };
+
+
+  onValue(
+    ledRef,
+    (snapshot) => {
+
+      const estado =
+        snapshot.val();
+
+      const elemento =
+        document.getElementById(
+          "estadoLed"
+        );
+
 
       if (estado === true) {
-        document.getElementById("estado").textContent = "ENCENDIDO";
-      } else {
-        document.getElementById("estado").textContent = "APAGADO";
+
+        elemento.textContent =
+          "ENCENDIDO";
+
+        elemento.className =
+          "estado on";
+
       }
-    });
-  </script>
+
+      else {
+
+        elemento.textContent =
+          "APAGADO";
+
+        elemento.className =
+          "estado off";
+
+      }
+
+    }
+  );
+
+
+  // =========================
+  // SENSOR DE LUZ
+  // =========================
+
+  onValue(
+    luxRef,
+    (snapshot) => {
+
+      const lux =
+        snapshot.val();
+
+      document.getElementById(
+        "lux"
+      ).textContent =
+        lux ?? "--";
+
+    }
+  );
+
+
+  onValue(
+    sensorRef,
+    (snapshot) => {
+
+      const estado =
+        snapshot.val();
+
+      const elemento =
+        document.getElementById(
+          "estadoSensor"
+        );
+
+
+      if (estado === "CONECTADO") {
+
+        elemento.textContent =
+          "CONECTADO";
+
+        elemento.className =
+          "estado ok";
+
+      }
+
+      else {
+
+        elemento.textContent =
+          "ERROR";
+
+        elemento.className =
+          "estado error";
+
+      }
+
+    }
+  );
+
+
+  // =========================
+  // OLED
+  // =========================
+
+  window.enviarMensaje =
+    function() {
+
+      const input =
+        document.getElementById(
+          "mensaje"
+        );
+
+      const texto =
+        input.value.trim();
+
+
+      if (texto === "") {
+
+        alert(
+          "Escribí un mensaje primero."
+        );
+
+        return;
+      }
+
+
+      set(
+        mensajeRef,
+        texto
+      );
+
+
+      input.value = "";
+
+    };
+
+
+  onValue(
+    mensajeRef,
+    (snapshot) => {
+
+      const mensaje =
+        snapshot.val();
+
+      document.getElementById(
+        "mensajeActual"
+      ).textContent =
+        mensaje ?? "Sin mensaje";
+
+    }
+  );
+
+</script>
 
 </body>
 </html>
